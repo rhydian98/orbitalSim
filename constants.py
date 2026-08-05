@@ -1,0 +1,3 @@
+SCALE = 1e-9
+AU = 149.6e9
+TIME_SCALE = 86_400
