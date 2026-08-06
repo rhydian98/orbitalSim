@@ -10,6 +10,7 @@ class Body:
         self.vy = vy
         self.ax = ax
         self.ay = ay
+        self.train = []
 
 
     def update_position(self, dt):
