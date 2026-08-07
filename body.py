@@ -1,5 +1,5 @@
 from collections import deque
-
+import math
 import pygame
 class Body:
     def __init__(self, name, mass, color, x=0.0 ,y=0.0, radius=1, vx=0, vy=0, ax=0, ay=0):
@@ -26,6 +26,12 @@ class Body:
 
         self.trail.append((self.x, self.y))
 
+
+    def get_speed(self):
+        return math.hypot(self.vx, self.vy)
+
+    def get_distance(self):
+        return math.hypot(self.x, self.y)
 
     def draw(self, screen, screen_position, trail_screen_pos, font):
         #print(self.name, len(self.trail), len(trail_screen_pos))

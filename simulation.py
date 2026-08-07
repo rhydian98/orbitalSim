@@ -32,7 +32,7 @@ class Simulation:
         for body in self.bodies:
             if body.label_rect and body.label_rect.collidepoint(mouse_pos):
                 self.selected_body = body
-                print(self.selected_body.name, self.selected_body.vy)
+                print(f"{self.selected_body.name}, {self.selected_body.get_speed()/1000:.1f}Km/s,{self.selected_body.get_distance()/1e9: .1f} million Km ")
                 break
 
 

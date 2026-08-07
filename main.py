@@ -26,6 +26,9 @@ def main():
 
     while running:
         dt = clock.tick(60) / 1000
+
+        dt = min(dt, 1/30)
+
         simulation_dt = dt * (TIME_SCALE*10)
 
         for event in pygame.event.get():
