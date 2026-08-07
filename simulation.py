@@ -10,8 +10,10 @@ class Simulation:
         self.clock = Clock()
         self.g = 6.67430e-11
         self.font = pygame.font.Font(None, 18)
+        self.simulation_time = 0
 
     def update(self, dt):
+        self.simulation_time += dt
         self.apply_gravity()
         for body in self.bodies:
             body.update_position(dt)
@@ -40,6 +42,18 @@ class Simulation:
             ]
 
             body.draw(self.screen, body_screen_pos, trail_position, self.font)
+
+        simulation_days = self.simulation_time / 86400
+        simulation_years = simulation_days / 365.25
+
+        clock_text = self.font.render(
+            f"Simulation Time: {simulation_years:.2f} years",
+            True,
+            (25,255,255)
+        )
+
+        self.screen.blit(clock_text, (10,10))
+
         pygame.display.flip()
 
     def apply_gravity(self):

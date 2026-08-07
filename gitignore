@@ -49,3 +49,7 @@ desktop.ini
 # Pygame/runtime-generated files
 screenshots/
 saves/
+
+.zed/
+
+__pychache__
