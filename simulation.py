@@ -11,6 +11,7 @@ class Simulation:
         self.g = 6.67430e-11
         self.font = pygame.font.Font(None, 18)
         self.simulation_time = 0
+        self.selected_body = None
 
     def update(self, dt):
         self.simulation_time += dt
@@ -26,6 +27,13 @@ class Simulation:
         screen_y = screen_center_y - y * SCALE
 
         return int(screen_x), int(screen_y)
+
+    def handle_click(self, mouse_pos):
+        for body in self.bodies:
+            if body.label_rect and body.label_rect.collidepoint(mouse_pos):
+                self.selected_body = body
+                print(self.selected_body.name, self.selected_body.vy)
+                break
 
 
 

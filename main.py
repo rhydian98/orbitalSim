@@ -31,6 +31,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                simulation.handle_click(event.pos)
+
+
 
         simulation.update(simulation_dt)
 

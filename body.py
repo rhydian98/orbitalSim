@@ -14,6 +14,7 @@ class Body:
         self.ax = ax
         self.ay = ay
         self.trail = deque(maxlen=200)
+        self.label_rect = None
 
 
     def update_position(self, dt):
@@ -27,7 +28,7 @@ class Body:
 
 
     def draw(self, screen, screen_position, trail_screen_pos, font):
-        print(self.name, len(self.trail), len(trail_screen_pos))
+        #print(self.name, len(self.trail), len(trail_screen_pos))
 
 
         for trailpos in trail_screen_pos:
@@ -37,4 +38,11 @@ class Body:
 
         label = font.render(self.name, True, self.color)
 
-        screen.blit(label, (screen_position[0] + self.radius + 5, screen_position[1] - self.radius))
+        label_position = [
+            screen_position[0] + self.radius + 5,
+            screen_position[1] - self.radius
+        ]
+
+        self.label_rect = label.get_rect(topleft=label_position)
+
+        screen.blit(label, label_position)
