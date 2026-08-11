@@ -2,6 +2,8 @@ import pygame
 from pygame.time import Clock
 from constants import SCALE
 import math
+from components import Position, Acceleration, Mass, Velocity, Trail
+from systems import MovementSystem, TrailSystem
 
 class Simulation:
     def __init__(self, bodies, screen):
@@ -12,6 +14,22 @@ class Simulation:
         self.font = pygame.font.Font(None, 18)
         self.simulation_time = 0
         self.selected_body = None
+        self.positions = {}
+        self.velocities = {}
+        self.accelerations = {}
+        self.masses = {}
+        self.renderables = {}
+        self.trails = {}
+        self.movement = MovementSystem()
+        self.trail_system = TrailSystem()
+
+
+        for i in bodies:
+            self.positions[i] = Position(i.x, i.y)
+            self.velocities[i] = Velocity(i.vx, i.vy)
+            self.masses[i] = Mass(i.mass)
+            self.accelerations[i] = Acceleration(i.ax, i.ay)
+            self.trails[i] = Trail()
 
 
         self.telemetry_options = {
@@ -27,8 +45,9 @@ class Simulation:
     def update(self, dt):
         self.simulation_time += dt
         self.apply_gravity()
-        for body in self.bodies:
-            body.update_position(dt)
+        self.movement.update(dt, self.positions, self.velocities, self.accelerations, self.trails)
+        self.trail_system.update(self.positions, self.trails)
+
 
     def to_screen_position(self, x, y):
         screen_center_x = self.screen.get_width() // 2
@@ -107,11 +126,12 @@ class Simulation:
         self.screen.fill((0, 0, 0))
 
         for body in self.bodies:
-            body_screen_pos = self.to_screen_position(body.x, body.y)
-            trail_position = [
-                self.to_screen_position(x, y)
-                for x, y in body.trail
+            body_screen_pos = self.to_screen_position(self.positions[body].x, self.positions[body].y)
+            trail = self.trails[body]
 
+            trail_position = [
+                self.to_screen_position(x,y)
+                for x, y in trail.points
             ]
 
             body.draw(self.screen, body_screen_pos, trail_position, self.font)
@@ -137,13 +157,13 @@ class Simulation:
 
     def apply_gravity(self):
         sun = self.bodies[0]
+        sun_pos_x = self.positions[sun].x
+        sun_pos_y = self.positions[sun].y
 
-        sun.ax = 0
-        sun.ay = 0
 
         for body in self.bodies[1:]:
-            dx = sun.x - body.x
-            dy = sun.y - body.y
+            dx = sun_pos_x - self.positions[body].x
+            dy = sun_pos_y - self.positions[body].y
 
             distance = math.sqrt(dx ** 2 + dy ** 2)
 
@@ -151,5 +171,5 @@ class Simulation:
                 continue
 
             acceleration = self.g * sun.mass / distance ** 2
-            body.ax = acceleration * dx / distance
-            body.ay = acceleration * dy / distance
+            self.accelerations[body].ax = acceleration * dx / distance
+            self.accelerations[body].ay = acceleration * dy / distance

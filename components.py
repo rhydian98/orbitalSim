@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class Position:
@@ -23,3 +23,8 @@ class Renderable:
     name: str
     color: tuple
     radius: int
+
+@dataclass
+class Trail:
+    points: list = field(default_factory=list)
+    maxLength: int = 200
