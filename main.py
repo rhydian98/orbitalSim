@@ -1,9 +1,9 @@
 import pygame
 from pygame.time import Clock
 from simulation import Simulation
-from constants import AU,TIME_SCALE
-from bodies import bodies
-from body import Body
+from constants import TIME_SCALE
+
+
 
 
 
@@ -15,7 +15,7 @@ def main():
     pygame.display.set_caption("Orbital Simulation")
     running = True
     clock = Clock()
-    simulation = Simulation(bodies, screen)
+    simulation = Simulation( screen)
 
     while running:
         dt = clock.tick(60) / 1000

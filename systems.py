@@ -1,5 +1,5 @@
 class MovementSystem:
-    def update(self, dt, positions, velocities, accelerations, trails):
+    def update(self, dt, positions, velocities, accelerations):
         for body in positions:
             if body in velocities and body in accelerations:
                 position = positions[body]

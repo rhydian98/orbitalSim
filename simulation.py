@@ -1,17 +1,15 @@
 import pygame
 from pygame.time import Clock
-from constants import SCALE, AU
+from constants import SCALE
 import math
-from components import Position, Acceleration, Mass, Velocity, Trail
 from systems import MovementSystem, TrailSystem
-from body import Body
 from ui import Ui
 from helpers import get_distance, get_speed
 from planet_loader import load_planets
 
 
 class Simulation:
-    def __init__(self, bodies, screen):
+    def __init__(self, screen):
 
         self.screen = screen
         self.clock = Clock()
@@ -19,12 +17,6 @@ class Simulation:
         self.font = pygame.font.Font(None, 18)
         self.simulation_time = 0
         self.selected_body = None
-        self.positions = {}
-        self.velocities = {}
-        self.accelerations = {}
-        self.masses = {}
-        self.renderables = {}
-        self.trails = {}
         self.movement = MovementSystem()
         self.trail_system = TrailSystem()
         self.ui = Ui()
@@ -65,7 +57,7 @@ class Simulation:
     def update(self, dt):
         self.simulation_time += dt
         self.apply_gravity()
-        self.movement.update(dt, self.positions, self.velocities, self.accelerations, self.trails)
+        self.movement.update(dt, self.positions, self.velocities, self.accelerations)
         self.trail_system.update(self.positions, self.trails)
 
 
@@ -80,7 +72,8 @@ class Simulation:
 
     def handle_click(self, mouse_pos):
         for entity in self.identities:
-            if self.label_rects[entity] and self.label_rects[entity].collidepoint(mouse_pos):
+            rect = self.label_rects.get(entity)
+            if rect and rect.collidepoint(mouse_pos):
                 self.selected_body = entity
                 break
 
@@ -158,7 +151,7 @@ class Simulation:
                     for x, y in trail.points
                 ]
             else:
-                trail_screen_pos = []
+                trail_position = []
 
             for point in trail_position:
                 pygame.draw.circle(self.screen, renderable.color, point, max(1, renderable.radius//2))
