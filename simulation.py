@@ -1,9 +1,11 @@
 import pygame
 from pygame.time import Clock
-from constants import SCALE
+from constants import SCALE, AU
 import math
 from components import Position, Acceleration, Mass, Velocity, Trail
 from systems import MovementSystem, TrailSystem
+from body import Body
+
 
 class Simulation:
     def __init__(self, bodies, screen):
@@ -22,6 +24,19 @@ class Simulation:
         self.trails = {}
         self.movement = MovementSystem()
         self.trail_system = TrailSystem()
+        spacecraft = Body("Spacecraft", 10_000, (128,128,128), x=AU,y=0, radius=3, vx=0, vy=29_780)
+
+        speed=math.hypot(spacecraft.vx, spacecraft.vy)
+
+        direction_x = spacecraft.vx / speed
+        direction_y = spacecraft.vy / speed
+
+        deltav = 3000
+
+        spacecraft.vx += direction_x * deltav
+        spacecraft.vy += direction_y * deltav
+
+        self.bodies.append(spacecraft)
 
 
         for i in bodies:
