@@ -1,4 +1,11 @@
 from dataclasses import dataclass, field
+import string
+from tokenize import String
+
+@dataclass
+class Identity:
+    name: str
+
 
 @dataclass
 class Position:
@@ -20,7 +27,6 @@ class Mass:
 
 @dataclass
 class Renderable:
-    name: str
     color: tuple
     radius: int
 

@@ -5,11 +5,14 @@ import math
 from components import Position, Acceleration, Mass, Velocity, Trail
 from systems import MovementSystem, TrailSystem
 from body import Body
+from ui import Ui
+from helpers import get_distance, get_speed
+from planet_loader import load_planets
 
 
 class Simulation:
     def __init__(self, bodies, screen):
-        self.bodies = bodies
+
         self.screen = screen
         self.clock = Clock()
         self.g = 6.67430e-11
@@ -24,27 +27,29 @@ class Simulation:
         self.trails = {}
         self.movement = MovementSystem()
         self.trail_system = TrailSystem()
-        spacecraft = Body("Spacecraft", 10_000, (128,128,128), x=AU,y=0, radius=3, vx=0, vy=29_780)
-
-        speed=math.hypot(spacecraft.vx, spacecraft.vy)
-
-        direction_x = spacecraft.vx / speed
-        direction_y = spacecraft.vy / speed
-
-        deltav = 3000
-
-        spacecraft.vx += direction_x * deltav
-        spacecraft.vy += direction_y * deltav
-
-        self.bodies.append(spacecraft)
+        self.ui = Ui()
+        self.label_rects = {}
 
 
-        for i in bodies:
-            self.positions[i] = Position(i.x, i.y)
-            self.velocities[i] = Velocity(i.vx, i.vy)
-            self.masses[i] = Mass(i.mass)
-            self.accelerations[i] = Acceleration(i.ax, i.ay)
-            self.trails[i] = Trail()
+        ecs = load_planets()
+
+        if ecs is None:
+            raise RuntimeError("Failed to load planet data")
+
+        self.positions = ecs["positions"]
+        self.accelerations = ecs["accelerations"]
+        self.masses = ecs["masses"]
+        self.velocities = ecs["velocities"]
+        self.trails = ecs["trails"]
+        self.identities = ecs["identities"]
+        self.renderables = ecs["renderables"]
+
+        self.entities_by_name = ecs["entities_by_name"]
+        self.next_entity_id = ecs["next_entity_id"]
+
+
+        print(self.entities_by_name)
+        print(self.positions[self.entities_by_name["Earth"]])
 
 
         self.telemetry_options = {
@@ -74,9 +79,9 @@ class Simulation:
         return int(screen_x), int(screen_y)
 
     def handle_click(self, mouse_pos):
-        for body in self.bodies:
-            if body.label_rect and body.label_rect.collidepoint(mouse_pos):
-                self.selected_body = body
+        for entity in self.identities:
+            if self.label_rects[entity] and self.label_rects[entity].collidepoint(mouse_pos):
+                self.selected_body = entity
                 break
 
         for key, rect in self.telemetry_menu_rects.items():
@@ -88,22 +93,22 @@ class Simulation:
 
     def build_info_box(self, body):
 
-        lines = [body.name]
+        lines = [self.identities[body].name]
 
         if self.telemetry_options["speed"]:
-            speed = body.get_speed() / 1000
+            speed = get_speed(self.velocities[body]) / 1000
             lines.append(f"Speed: {speed:.1f} km/s")
 
         if self.telemetry_options["distance"]:
-            distance = body.get_distance() / 1e9
+            distance = get_distance(self.positions[body]) / 1e9
             lines.append(f"Distance: {distance:.1f} million km")
 
         if self.telemetry_options["mass"]:
-            lines.append(f"Mass: {body.mass:.2e} kg")
+            lines.append(f"Mass: {self.masses[body].value:.2e} kg")
 
         if self.telemetry_options["velocity"]:
-            lines.append(f"Vx: {body.vx / 1000:.1f} km/s")
-            lines.append(f"Vy: {body.vy / 1000:.1f} km/s")
+            lines.append(f"Vx: {self.velocities[body].vx / 1000:.1f} km/s")
+            lines.append(f"Vy: {self.velocities[body].vy/ 1000:.1f} km/s")
 
         return lines
 
@@ -140,22 +145,43 @@ class Simulation:
 
         self.screen.fill((0, 0, 0))
 
-        for body in self.bodies:
-            body_screen_pos = self.to_screen_position(self.positions[body].x, self.positions[body].y)
-            trail = self.trails[body]
+        for entity in self.renderables:
+            position = self.positions[entity]
+            renderable = self.renderables[entity]
+            identity = self.identities[entity]
+            trail = self.trails.get(entity)
 
-            trail_position = [
-                self.to_screen_position(x,y)
-                for x, y in trail.points
-            ]
+            body_screen_position = self.to_screen_position(position.x, position.y)
+            if trail:
+                trail_position = [
+                    self.to_screen_position(x,y)
+                    for x, y in trail.points
+                ]
+            else:
+                trail_screen_pos = []
 
-            body.draw(self.screen, body_screen_pos, trail_position, self.font)
+            for point in trail_position:
+                pygame.draw.circle(self.screen, renderable.color, point, max(1, renderable.radius//2))
 
-            lines = self.build_info_box(body)
+            pygame.draw.circle(self.screen, renderable.color,body_screen_position, renderable.radius)
+
+            lines = self.build_info_box(entity)
 
 
-            if body ==  self.selected_body:
-                body.draw_info_box(self.screen, body_screen_pos, self.font, lines)
+            if entity ==  self.selected_body:
+                 self.ui.draw_info_box(self.screen, body_screen_position, self.font, lines)
+
+            text = self.font.render(identity.name, True, (255,255,255))
+
+            label_pos = (
+                body_screen_position[0] + renderable.radius + 5,
+                body_screen_position[1]
+
+            )
+
+            self.label_rects[entity] = text.get_rect(topleft=label_pos)
+
+            self.screen.blit(text, label_pos)
 
         simulation_days = self.simulation_time / 86400
         simulation_years = simulation_days / 365.25
@@ -171,12 +197,15 @@ class Simulation:
         pygame.display.flip()
 
     def apply_gravity(self):
-        sun = self.bodies[0]
+        sun = self.entities_by_name["Sun"]
+
         sun_pos_x = self.positions[sun].x
         sun_pos_y = self.positions[sun].y
 
 
-        for body in self.bodies[1:]:
+        for body in self.positions:
+            if body == sun:
+                continue
             dx = sun_pos_x - self.positions[body].x
             dy = sun_pos_y - self.positions[body].y
 
@@ -185,6 +214,6 @@ class Simulation:
             if distance == 0:
                 continue
 
-            acceleration = self.g * sun.mass / distance ** 2
+            acceleration = self.g * self.masses[sun].value / distance ** 2
             self.accelerations[body].ax = acceleration * dx / distance
             self.accelerations[body].ay = acceleration * dy / distance

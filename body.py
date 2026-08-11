@@ -27,11 +27,7 @@ class Body:
         self.trail.append((self.x, self.y))
 
 
-    def get_speed(self):
-        return math.hypot(self.vx, self.vy)
 
-    def get_distance(self):
-        return math.hypot(self.x, self.y)
 
     def draw(self, screen, screen_position, trail_screen_pos, font):
         #print(self.name, len(self.trail), len(trail_screen_pos))
@@ -52,24 +48,3 @@ class Body:
         self.label_rect = label.get_rect(topleft=label_position)
 
         screen.blit(label, label_position)
-
-
-    def draw_info_box(self, screen, screen_position, font, lines):
-        speed = self.get_speed()/1000
-        distance = self.get_distance()/1e9
-
-
-
-        box_x = screen_position[0] + 20
-        box_y = screen_position[1] + 20
-
-        box_width=220
-        box_height=80
-
-        pygame.draw.rect(screen, (30,30,30), (box_x, box_y, box_width, box_height))
-
-        y=box_y +8
-        for line in lines:
-            text = font.render(line, True, (255,255,255))
-            screen.blit(text, (box_x + 8, y))
-            y +=22
