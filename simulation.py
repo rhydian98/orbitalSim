@@ -2,7 +2,7 @@ import pygame
 from pygame.time import Clock
 from constants import SCALE
 import math
-from systems import MovementSystem, TrailSystem
+from systems import MovementSystem, TrailSystem, GravitySystem
 from ui import Ui
 from helpers import get_distance, get_speed
 from planet_loader import load_planets
@@ -13,12 +13,13 @@ class Simulation:
 
         self.screen = screen
         self.clock = Clock()
-        self.g = 6.67430e-11
+
         self.font = pygame.font.Font(None, 18)
         self.simulation_time = 0
         self.selected_body = None
         self.movement = MovementSystem()
         self.trail_system = TrailSystem()
+        self.gravity = GravitySystem()
         self.ui = Ui()
         self.label_rects = {}
 
@@ -42,7 +43,7 @@ class Simulation:
 
         print(self.entities_by_name)
         print(self.positions[self.entities_by_name["Earth"]])
-
+        self.sun = self.entities_by_name["Sun"]
 
         self.telemetry_options = {
             "speed": True,
@@ -56,7 +57,7 @@ class Simulation:
 
     def update(self, dt):
         self.simulation_time += dt
-        self.apply_gravity()
+        self.gravity.update(self.sun, self.masses, self.positions, self.accelerations)
         self.movement.update(dt, self.positions, self.velocities, self.accelerations)
         self.trail_system.update(self.positions, self.trails)
 
