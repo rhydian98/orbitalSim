@@ -10,7 +10,7 @@ from create_spacecraft import create_spacecraft
 from draw import Rendering
 class Simulation:
     def __init__(self, screen):
-
+        self.paused = False
         self.screen = screen
         self.clock = Clock()
 
@@ -33,6 +33,7 @@ class Simulation:
         self.accelerations = ecs["accelerations"]
         self.masses = ecs["masses"]
         self.velocities = ecs["velocities"]
+        self.radii = ecs["radii"]
         self.trails = ecs["trails"]
         self.identities = ecs["identities"]
         self.renderables = ecs["renderables"]
@@ -63,12 +64,23 @@ class Simulation:
 
 
     def update(self, dt):
-
-        sun = self.entities_by_name["Sun"]
-
+        if self.paused:
+            return
         self.simulation_time += dt
-        self.gravity.update(self.masses, self.positions, self.accelerations)
-        self.movement.update(dt, self.positions, self.velocities, self.accelerations)
+
+
+        max_step = 60
+
+        remaining = dt
+        while remaining > 0:
+
+            step= min(max_step, remaining)
+            self.gravity.update(self.masses, self.positions, self.accelerations)
+            self.movement.update(step, self.positions, self.velocities, self.accelerations)
+
+
+            remaining -= step
+
         self.trail_system.update(self.positions, self.trails)
 
 
@@ -105,12 +117,15 @@ class Simulation:
     def handle_keydown(self, event):
         if not self.delta_v_active:
             return
+        if event.key == pygame.K_SPACE:
+            self.paused = not self.paused
         if event.key == pygame.K_BACKSPACE:
             self.delta_v_text = self.delta_v_text[:-1]
         elif event.key == pygame.K_RETURN:
             self.delta_v_active = False
         elif event.unicode.isdigit() or event.unicode == ".":
             self.delta_v_text += event.unicode
+
 
 
 
@@ -173,7 +188,6 @@ class Simulation:
         pygame.display.flip()
 
     def launch_rocket(self):
-
         if self.selected_body is None:
             return
 
@@ -182,8 +196,7 @@ class Simulation:
 
         delta_v = float(self.delta_v_text)*1000
 
-
-        spacecraft = create_spacecraft(self.next_entity_id, self.selected_body, delta_v, "prograde", self.positions, self.velocities,
+        spacecraft = create_spacecraft(self.next_entity_id, self.selected_body, delta_v, "prograde", self.radii, self.positions, self.velocities,
             self.accelerations, self.masses, self.trails, self.identities, self.renderables)
 
         self.spacecraft.append(spacecraft)

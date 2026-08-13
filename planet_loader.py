@@ -1,7 +1,7 @@
 import json
 from json.decoder import JSONDecodeError
 
-from components import Identity, Velocity, Acceleration, Position, Renderable, Mass, Trail
+from components import Identity, Velocity, Acceleration, Position, Renderable, Mass, Trail, Radius
 
 def load_planets(path="planets.json"):
     try:
@@ -21,6 +21,7 @@ def load_planets(path="planets.json"):
     accelerations = {}
     masses = {}
     renderables = {}
+    radii = {}
     trails = {}
     identities = {}
 
@@ -53,6 +54,10 @@ def load_planets(path="planets.json"):
             planet["mass"]
         )
 
+        radii[entity] = Radius(
+            planet["physical_radius"]
+        )
+
         renderables[entity] = Renderable(
             planet["color"],
             planet["radius"]
@@ -66,6 +71,7 @@ def load_planets(path="planets.json"):
        "velocities": velocities,
        "accelerations": accelerations,
        "masses": masses,
+       "radii": radii,
        "renderables": renderables,
        "trails": trails,
        "identities": identities,

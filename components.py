@@ -26,9 +26,13 @@ class Mass:
     value: float
 
 @dataclass
+class Radius:
+    radius: float #meters
+
+@dataclass
 class Renderable:
     color: tuple
-    radius: int
+    radius: int #pixels
 
 @dataclass
 class Trail:
