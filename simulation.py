@@ -6,8 +6,8 @@ from systems import MovementSystem, TrailSystem, GravitySystem
 from ui import Ui
 from helpers import get_distance, get_speed
 from planet_loader import load_planets
-
-
+from create_spacecraft import create_spacecraft
+from draw import Rendering
 class Simulation:
     def __init__(self, screen):
 
@@ -22,7 +22,7 @@ class Simulation:
         self.gravity = GravitySystem()
         self.ui = Ui()
         self.label_rects = {}
-
+        self.rendering = Rendering()
 
         ecs = load_planets()
 
@@ -41,10 +41,6 @@ class Simulation:
         self.next_entity_id = ecs["next_entity_id"]
 
 
-        print(self.entities_by_name)
-        print(self.positions[self.entities_by_name["Earth"]])
-        self.sun = self.entities_by_name["Sun"]
-
         self.telemetry_options = {
             "speed": True,
             "distance": True,
@@ -54,10 +50,24 @@ class Simulation:
         }
 
         self.telemetry_menu_rects = {}
+        self.launch_rect=pygame.Rect(20,280,100,30)
+
+        self.delta_v_text = ""
+        self.delta_v_active = False
+        self.delta_v_rect = pygame.Rect(20,220,100,30)
+
+        self.spacecraft = []
+        self.next_entity_id += 1
+
+
+
 
     def update(self, dt):
+
+        sun = self.entities_by_name["Sun"]
+
         self.simulation_time += dt
-        self.gravity.update(self.sun, self.masses, self.positions, self.accelerations)
+        self.gravity.update(self.masses, self.positions, self.accelerations)
         self.movement.update(dt, self.positions, self.velocities, self.accelerations)
         self.trail_system.update(self.positions, self.trails)
 
@@ -83,6 +93,25 @@ class Simulation:
                 self.telemetry_options[key] = not self.telemetry_options[key]
                 return
 
+        if self.delta_v_rect.collidepoint(mouse_pos):
+            self.delta_v_active = True
+        else:
+            self.delta_v_active = False
+
+        if self.launch_rect.collidepoint(mouse_pos):
+            self.launch_rocket()
+
+
+    def handle_keydown(self, event):
+        if not self.delta_v_active:
+            return
+        if event.key == pygame.K_BACKSPACE:
+            self.delta_v_text = self.delta_v_text[:-1]
+        elif event.key == pygame.K_RETURN:
+            self.delta_v_active = False
+        elif event.unicode.isdigit() or event.unicode == ".":
+            self.delta_v_text += event.unicode
+
 
 
     def build_info_box(self, body):
@@ -107,36 +136,7 @@ class Simulation:
         return lines
 
 
-    def draw_tel_menu(self,screen):
-        options = [
-            ("speed", "Speed"),
-            ("mass", "Mass"),
-            ("distance", "Distance"),
-            ("velocity", "Velocity")
-        ]
-
-        x = 20
-        y = 60
-
-        for key, label in options:
-            checkbox_rect = pygame.Rect(x,y, 18,18)
-
-            pygame.draw.rect(screen, (255,255,255), checkbox_rect,2)
-
-            if self.telemetry_options[key]:
-                pygame.draw.line(screen, (255,255,255), checkbox_rect.topleft, checkbox_rect.bottomright, 2)
-
-            text = self.font.render(label, True, (255,255,255))
-            screen.blit(text, (x+28, y - 2))
-
-            self.telemetry_menu_rects[key] = checkbox_rect
-
-            y += 28
-
-
-
     def draw(self):
-
         self.screen.fill((0, 0, 0))
 
         for entity in self.renderables:
@@ -154,60 +154,37 @@ class Simulation:
             else:
                 trail_position = []
 
-            for point in trail_position:
-                pygame.draw.circle(self.screen, renderable.color, point, max(1, renderable.radius//2))
-
-            pygame.draw.circle(self.screen, renderable.color,body_screen_position, renderable.radius)
-
             lines = self.build_info_box(entity)
-
 
             if entity ==  self.selected_body:
                  self.ui.draw_info_box(self.screen, body_screen_position, self.font, lines)
 
-            text = self.font.render(identity.name, True, (255,255,255))
-
-            label_pos = (
-                body_screen_position[0] + renderable.radius + 5,
-                body_screen_position[1]
-
-            )
-
-            self.label_rects[entity] = text.get_rect(topleft=label_pos)
-
-            self.screen.blit(text, label_pos)
+            self.label_rects[entity] = self.rendering.draw_entity(self.screen, body_screen_position, renderable, identity, trail_position, self.font )
 
         simulation_days = self.simulation_time / 86400
         simulation_years = simulation_days / 365.25
-        self.draw_tel_menu(self.screen)
-        clock_text = self.font.render(
-            f"Simulation Time: {simulation_years:.2f} years",
-            True,
-            (25,255,255)
-        )
+        self.ui.draw_tel_menu(self.screen, self.telemetry_menu_rects, self.telemetry_options, self.font)
+        self.ui.draw_delta_v_input(self.screen, self.font, self.delta_v_rect, self.delta_v_text, self.delta_v_active)
+        self.ui.draw_launch_button(self.screen, self.font, self.launch_rect)
+        self.ui.draw_simulation_clock(self.screen, self.font, (simulation_years, simulation_days))
 
-        self.screen.blit(clock_text, (10,10))
+
 
         pygame.display.flip()
 
-    def apply_gravity(self):
-        sun = self.entities_by_name["Sun"]
+    def launch_rocket(self):
 
-        sun_pos_x = self.positions[sun].x
-        sun_pos_y = self.positions[sun].y
+        if self.selected_body is None:
+            return
+
+        if not self.delta_v_text:
+            return
+
+        delta_v = float(self.delta_v_text)*1000
 
 
-        for body in self.positions:
-            if body == sun:
-                continue
-            dx = sun_pos_x - self.positions[body].x
-            dy = sun_pos_y - self.positions[body].y
+        spacecraft = create_spacecraft(self.next_entity_id, self.selected_body, delta_v, "prograde", self.positions, self.velocities,
+            self.accelerations, self.masses, self.trails, self.identities, self.renderables)
 
-            distance = math.sqrt(dx ** 2 + dy ** 2)
-
-            if distance == 0:
-                continue
-
-            acceleration = self.g * self.masses[sun].value / distance ** 2
-            self.accelerations[body].ax = acceleration * dx / distance
-            self.accelerations[body].ay = acceleration * dy / distance
+        self.spacecraft.append(spacecraft)
+        self.next_entity_id += 1

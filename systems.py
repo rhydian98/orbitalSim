@@ -7,13 +7,13 @@ class MovementSystem:
                 position = positions[body]
                 velocity = velocities[body]
                 acceleration = accelerations[body]
-                print (f"Before {position.x},{ position.y}")
+                #print (f"Before {position.x},{ position.y}")
                 velocity.vx += acceleration.ax * dt
                 velocity.vy += acceleration.ay * dt
 
                 position.x += velocity.vx * dt
                 position.y += velocity.vy * dt
-                print(f"After {position.x}, {position.y}")
+                #print(f"After {position.x}, {position.y}")
 
 
 
@@ -36,23 +36,31 @@ class TrailSystem:
 
 
 class GravitySystem:
-    def update(self, star, masses, positions, accelerations):
+    def update(self, masses, positions, accelerations):
         g = 6.67430e-11
-        sun_pos_x = positions[star].x
-        sun_pos_y = positions[star].y
+        for entity in positions:
+            accelerations[entity].ax = 0
+            accelerations[entity].ay = 0
+
+            for other in positions:
+                if entity == other:
+                    continue
 
 
-        for body in positions:
-            if body == star:
-                continue
-            dx = sun_pos_x - positions[body].x
-            dy = sun_pos_y - positions[body].y
+                dx = positions[other].x - positions[entity].x
+                dy = positions[other].y - positions[entity].y
 
-            distance = math.sqrt(dx ** 2 + dy ** 2)
+                distance = math.hypot(dx,dy)
 
-            if distance == 0:
-                continue
+                if distance == 0:
+                    continue
 
-            acceleration = g * masses[star].value / distance ** 2
-            accelerations[body].ax = acceleration * dx / distance
-            accelerations[body].ay = acceleration * dy / distance
+                acceleration = (g * masses[other].value) / distance ** 2
+
+                accelerations[entity].ax +=(
+                    acceleration * dx / distance
+                )
+
+                accelerations[entity].ay += (
+                    acceleration * dy / distance
+                )
