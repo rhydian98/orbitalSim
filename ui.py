@@ -71,5 +71,5 @@ class Ui:
         pygame.draw.rect(screen, (255,255,255), rect, 2)
 
         text = font.render("Launch", True, (255,255,255))
-
-        screen.blit(text, (rect.x+25, rect.y+70))
+        text_rect = text.get_rect(center=rect.center)
+        screen.blit(text, (text_rect))

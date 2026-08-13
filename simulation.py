@@ -115,10 +115,12 @@ class Simulation:
 
 
     def handle_keydown(self, event):
-        if not self.delta_v_active:
-            return
         if event.key == pygame.K_SPACE:
             self.paused = not self.paused
+
+        if not self.delta_v_active:
+            return
+
         if event.key == pygame.K_BACKSPACE:
             self.delta_v_text = self.delta_v_text[:-1]
         elif event.key == pygame.K_RETURN:
