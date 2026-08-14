@@ -30,6 +30,15 @@ class Ui:
 
         screen.blit(clock_text, (10,10))
 
+    def draw_time_warp(self, screen, font, time_warp):
+        time_warp_text = font.render(
+            f"Time Warp: {time_warp}x",
+            True,
+            (25, 255, 255)
+        )
+
+        screen.blit(time_warp_text, (10, 30))
+
 
     def draw_tel_menu(self,screen,telemetry_rects, telemetry_options,font):
          options = [

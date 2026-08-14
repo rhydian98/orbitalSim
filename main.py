@@ -22,8 +22,8 @@ def main():
         dt = clock.tick(60) / 1000
 
         dt = min(dt, 1/30)
-
-        simulation_dt = dt * (TIME_SCALE*10)
+        time_warp = event_handler.get_time_warp()
+        simulation_dt = dt * (time_warp)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -32,9 +32,11 @@ def main():
 
 
 
+
+
         simulation.update(simulation_dt)
 
-        simulation.draw()
+        simulation.draw(time_warp)
 
     pygame.quit()
 

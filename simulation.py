@@ -125,7 +125,7 @@ class Simulation:
         return lines
 
 
-    def draw(self):
+    def draw(self, time_warp):
         self.screen.fill((0, 0, 0))
 
         for entity in self.renderables:
@@ -156,6 +156,7 @@ class Simulation:
         self.ui.draw_delta_v_input(self.screen, self.font, self.delta_v_rect, self.delta_v_text, self.delta_v_active)
         self.ui.draw_launch_button(self.screen, self.font, self.launch_rect)
         self.ui.draw_simulation_clock(self.screen, self.font, (simulation_years, simulation_days))
+        self.ui.draw_time_warp(self.screen, self.font, time_warp)
 
 
 
