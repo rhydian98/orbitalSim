@@ -2,9 +2,8 @@ import pygame
 from pygame.time import Clock
 from simulation import Simulation
 from constants import TIME_SCALE
-
-
-
+from event_handlers import EventHandler
+from camera import Camera
 
 
 
@@ -15,7 +14,9 @@ def main():
     pygame.display.set_caption("Orbital Simulation")
     running = True
     clock = Clock()
-    simulation = Simulation( screen)
+    camera = Camera(screen)
+    simulation = Simulation( screen, camera)
+    event_handler = EventHandler(simulation, camera)
 
     while running:
         dt = clock.tick(60) / 1000
@@ -27,10 +28,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                simulation.handle_keydown(event)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                simulation.handle_click(event.pos)
+            event_handler.handle_event(event)
 
 
 

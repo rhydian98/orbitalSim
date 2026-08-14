@@ -8,8 +8,9 @@ from helpers import get_distance, get_speed
 from planet_loader import load_planets
 from create_spacecraft import create_spacecraft
 from draw import Rendering
+
 class Simulation:
-    def __init__(self, screen):
+    def __init__(self, screen, camera):
         self.paused = False
         self.screen = screen
         self.clock = Clock()
@@ -23,6 +24,7 @@ class Simulation:
         self.ui = Ui()
         self.label_rects = {}
         self.rendering = Rendering()
+        self.camera = camera
 
         ecs = load_planets()
 
@@ -77,7 +79,7 @@ class Simulation:
             step= min(max_step, remaining)
             self.gravity.update(self.masses, self.positions, self.accelerations)
             self.movement.update(step, self.positions, self.velocities, self.accelerations)
-
+            self.camera.update(self.positions)
 
             remaining -= step
 
@@ -88,46 +90,16 @@ class Simulation:
         screen_center_x = self.screen.get_width() // 2
         screen_center_y = self.screen.get_height() // 2
 
-        screen_x = screen_center_x + x * SCALE
-        screen_y = screen_center_y - y * SCALE
+        screen_x = screen_center_x + (x - self.camera.x) * SCALE * self.camera.zoom
+        screen_y = screen_center_y - (y - self.camera.y) * SCALE * self.camera.zoom
 
         return int(screen_x), int(screen_y)
 
-    def handle_click(self, mouse_pos):
-        for entity in self.identities:
-            rect = self.label_rects.get(entity)
-            if rect and rect.collidepoint(mouse_pos):
-                self.selected_body = entity
-                break
+    def select_entity(self, entity):
+        self.selected_body = entity
 
-        for key, rect in self.telemetry_menu_rects.items():
-            if rect.collidepoint(mouse_pos):
-                self.telemetry_options[key] = not self.telemetry_options[key]
-                return
-
-        if self.delta_v_rect.collidepoint(mouse_pos):
-            self.delta_v_active = True
-        else:
-            self.delta_v_active = False
-
-        if self.launch_rect.collidepoint(mouse_pos):
-            self.launch_rocket()
-
-
-    def handle_keydown(self, event):
-        if event.key == pygame.K_SPACE:
-            self.paused = not self.paused
-
-        if not self.delta_v_active:
-            return
-
-        if event.key == pygame.K_BACKSPACE:
-            self.delta_v_text = self.delta_v_text[:-1]
-        elif event.key == pygame.K_RETURN:
-            self.delta_v_active = False
-        elif event.unicode.isdigit() or event.unicode == ".":
-            self.delta_v_text += event.unicode
-
+    def toggle_telemetry(self, key):
+        self.telemetry_options[key] = not self.telemetry_options[key]
 
 
 
