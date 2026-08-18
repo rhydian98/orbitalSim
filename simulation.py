@@ -23,7 +23,7 @@ class Simulation:
         self.gravity = GravitySystem()
         self.ui = Ui()
         self.label_rects = {}
-        self.rendering = Rendering()
+        self.rendering = Rendering(self.screen)
         self.camera = camera
 
         ecs = load_planets()
@@ -101,6 +101,8 @@ class Simulation:
     def toggle_telemetry(self, key):
         self.telemetry_options[key] = not self.telemetry_options[key]
 
+    def toggle_pause(self):
+        self.paused = not self.paused
 
 
     def build_info_box(self, body):
@@ -147,6 +149,7 @@ class Simulation:
 
             if entity ==  self.selected_body:
                  self.ui.draw_info_box(self.screen, body_screen_position, self.font, lines)
+                 self.rendering.draw_thrust_vector( body_screen_position )
 
             self.label_rects[entity] = self.rendering.draw_entity(self.screen, body_screen_position, renderable, identity, trail_position, self.font )
 

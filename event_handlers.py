@@ -56,8 +56,9 @@ class EventHandler:
             return
 
         if event.key == pygame.K_PERIOD:
-            self.increase_time_warp()
-            return
+            if not self.simulation.delta_v_active:
+                self.increase_time_warp()
+                return
         elif event.key == pygame.K_COMMA:
             self.decrease_time_warp()
 

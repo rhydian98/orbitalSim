@@ -15,7 +15,7 @@ def create_spacecraft( entity, launch_entity, delta_v, direction,radii,
          #   direction_y *= -1
 
 
-        identities[entity] = Identity(name="")
+        identities[entity] = Identity(name=f"Spacecraft {entity}")
         launch_distance = float(radii[launch_entity].radius) + 400_000.0
 
         positions[entity] = Position(
