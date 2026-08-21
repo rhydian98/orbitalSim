@@ -1,11 +1,13 @@
-from turtle import screensize
+from constants import SCALE
 
 import pygame
 
 class Rendering:
 
-    def __init__(self, screen):
+    def __init__(self, screen, camera, font):
         self.screen = screen
+        self.camera = camera
+        self.font = font
 
     def draw_entity(self, screen, screen_position, renderable, identity, trail_positions, font):
         for point in trail_positions:
@@ -25,7 +27,39 @@ class Rendering:
         return text.get_rect(topleft=label_pos)
 
 
-    def draw_thrust_vector(self, screen_position):
-        thrust_end_pos = (screen_position[0]+40, screen_position[1] - 40)
 
-        pygame.draw.line(self.screen, (255, 255, 255), screen_position, thrust_end_pos )
+
+
+    def to_screen_position(self, x, y):
+        screen_center_x = self.screen.get_width() // 2
+        screen_center_y = self.screen.get_height() // 2
+
+        screen_x = screen_center_x + (x - self.camera.x) * SCALE * self.camera.zoom
+        screen_y = screen_center_y - (y - self.camera.y) * SCALE * self.camera.zoom
+
+        return int(screen_x), int(screen_y)
+
+    def update(self, renderables, positions, identities, trails):
+        self.screen.fill((0, 0, 0))
+        label_rects = {}
+        for entity, renderable in renderables.items():
+            position = positions[entity]
+            identity = identities[entity]
+            screen_position  = self.to_screen_position(position.x, position.y)
+
+            trail = trails.get(entity)
+
+            if trail:
+                trail_position = [
+                    self.to_screen_position(x,y)
+                    for x, y in trail.points
+                ]
+            else:
+                trail_position = []
+
+
+
+            label_rects[entity] = self.draw_entity(self.screen, screen_position, renderable, identity, trail_position, self.font )
+
+
+        return label_rects

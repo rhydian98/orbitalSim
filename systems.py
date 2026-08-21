@@ -64,3 +64,44 @@ class GravitySystem:
                 accelerations[entity].ay += (
                     acceleration * dy / distance
                 )
+
+
+class ThrustVectorSystem:
+    def __init__(self):
+        self.direction = (1.0, 0.0)
+        self.dragging = False
+        self.length = 60
+
+    def get_end_position(self, ship_screen_pos):
+        return (
+            ship_screen_pos[0] + self.direction[0] * self.length,
+            ship_screen_pos[1] + self.direction[1] * self.length
+        )
+
+    def update_drag(self, mouse_pos, ship_screen_pos):
+        dx = mouse_pos[0] - ship_screen_pos[0]
+        dy = mouse_pos[1] - ship_screen_pos[1]
+
+        length = math.hypot(dx, dy)
+
+        if length == 0:
+            return
+
+        self.direction = (dx/length, dy/length)
+
+
+class TimeSystem:
+    def __init__(self):
+        self.time_warps = [1, 10, 100, 1000, 10_000, 100_000, 1_000_000]
+        self.index = 0
+
+    def increase(self):
+        if self.index < len(self.time_warps) -1:
+            self.index+=1
+
+    def decrease(self):
+        if self.index > 0:
+            self.index -= 1
+
+    def get_warp(self):
+        return self.time_warps[self.index]
