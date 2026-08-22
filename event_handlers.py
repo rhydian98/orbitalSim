@@ -1,5 +1,5 @@
-from sqlite3.dbapi2 import Time
 
+import math
 import pygame
 from systems import ThrustVectorSystem, TimeSystem
 
@@ -25,8 +25,14 @@ class EventHandler:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.handle_click(event.pos)
+        elif event.type == pygame.MOUSEMOTION:
+            self.handle_mouse_motion(event.pos)
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                self.thrust_control.dragging = False
         elif event.type == pygame.MOUSEWHEEL:
             self.handle_zoom(event.y)
+
 
 
     def handle_click(self, mousepos):
@@ -34,10 +40,10 @@ class EventHandler:
         self.handle_telemetry_click(mousepos)
         self.handle_delta_v_click(mousepos)
         self.handle_launch_click(mousepos)
-        #self.handle_thurst_vector_click(mousepos)
+        self.handle_thrust_vector_click(mousepos)
 
 
-
+    #Click Handlers
     def handle_entity_click(self, mousepos):
         for entity, rect in self.label_rects.items():
             if rect and rect.collidepoint(mousepos):
@@ -61,11 +67,48 @@ class EventHandler:
         if self.ui.delta_v_rect.collidepoint(mousepos):
             self.ui.delta_v_active = not self.ui.delta_v_active
 
-    def handlethrust_vector_click(self, mousepos):
-        position = self.simulation.positions[self.simulation.selected_entity]
+    def handle_thrust_vector_click(self, mousepos):
+        selected =  self.simulation.get_current_selected()
+
+        if selected is None:
+           return
+
+        position = self.simulation.positions[selected]
         ship_screen_pos = self.renderer.to_screen_position(position.x, position.y)
-        if self.thrust_control.dragging:
-            self.thrust_control.update_drag(mousepos, ship_screen_pos)
+
+        thrust_end_pos = self.thrust_control.get_end_position(
+            ship_screen_pos
+        )
+
+        dx = mousepos[0] - thrust_end_pos[0]
+        dy = mousepos[1] - thrust_end_pos[1]
+
+        distance = math.hypot(dx, dy)
+
+        if distance <= 10:
+            self.thrust_control.dragging=True
+
+    #handle motion of mouse
+    def handle_mouse_motion(self,mousepos):
+        if not self.thrust_control.dragging:
+            return
+
+        selected = self.simulation.get_current_selected()
+
+        if selected == None:
+            return
+
+        position = self.simulation.positions[selected]
+
+        ship_screen_pos = self.renderer.to_screen_position(
+            position.x,
+            position.y
+        )
+
+        self.thrust_control.update_drag(
+            mousepos,
+            ship_screen_pos
+        )
 
 
     def handle_keydown(self, event):

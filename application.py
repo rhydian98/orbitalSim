@@ -22,7 +22,7 @@ class Application:
         self.font = pygame.font.Font(None, 18)
         self.running = True
         self.thrust_vector_controller = ThrustVectorSystem()
-        self.renderer = Rendering(screen, self.camera,self.font)
+        self.renderer = Rendering(screen, self.camera,self.font, self.thrust_vector_controller)
         self.ui = Ui(self.screen)
         self.event_handler = EventHandler(self.simulation, self.camera, self.ui, self.renderer, self.thrust_vector_controller, self.time_system)
 
@@ -72,4 +72,5 @@ class Application:
                 self.simulation.positions[selected_body].y
             )
             self.ui.draw_info_box(screen_position, lines)
+            self.renderer.draw_thrust_vector(screen_position, self.thrust_vector_controller.get_end_position(screen_position))
         pygame.display.flip()

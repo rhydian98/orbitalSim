@@ -4,10 +4,12 @@ import pygame
 
 class Rendering:
 
-    def __init__(self, screen, camera, font):
+    def __init__(self, screen, camera, font, thrust_vector_controller):
         self.screen = screen
         self.camera = camera
         self.font = font
+        self.thrust_vector_controller = thrust_vector_controller
+
 
     def draw_entity(self, screen, screen_position, renderable, identity, trail_positions, font):
         for point in trail_positions:
@@ -25,6 +27,12 @@ class Rendering:
         screen.blit(text, label_pos)
 
         return text.get_rect(topleft=label_pos)
+
+
+    def draw_thrust_vector(self, selected_entity_position, end_position):
+
+        pygame.draw.line(self.screen, (255,255,255), selected_entity_position, end_position)
+        pygame.draw.circle(self.screen, (255,255,255), end_position,6)
 
 
 

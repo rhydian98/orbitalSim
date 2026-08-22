@@ -11,7 +11,7 @@ class Simulation:
         self.paused = False
 
         self.simulation_time = 0
-        self.selected_body = None
+        self.selected_entity = None
 
         # System Constructors
         self.movement = MovementSystem()
@@ -66,7 +66,7 @@ class Simulation:
 
 
     def select_entity(self, entity):
-        self.selected_body = entity
+        self.selected_entity = entity
 
 
 
@@ -81,13 +81,13 @@ class Simulation:
     def get_simulation_time(self):
         return self.simulation_time
     def get_current_selected(self):
-        return self.selected_body
+        return self.selected_entity
 
     def launch_rocket(self, delta_v):
-        if self.selected_body is None:
+        if self.selected_entity is None:
             return
 
-        spacecraft = create_spacecraft(self.next_entity_id, self.selected_body, delta_v, "prograde", self.radii, self.positions, self.velocities,
+        spacecraft = create_spacecraft(self.next_entity_id, self.selected_entity, delta_v, "prograde", self.radii, self.positions, self.velocities,
             self.accelerations, self.masses, self.trails, self.identities, self.renderables)
 
         self.spacecraft.append(spacecraft)
